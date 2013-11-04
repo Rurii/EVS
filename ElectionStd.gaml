@@ -8,7 +8,7 @@ model ElectionStd
 
 global {
 	/** Insert the global definitions, variables and actions here */
-	bool debug1 <- false; bool debug2 <- false; bool debug3 <- true;
+	bool debug1 <- false; bool debug2 <- false; bool debug3 <- true; bool debug4 <- true;
 	int nb_operator <- 57;
 	int nb_police <- 50;
 	int nb_party_witness <- 37;
@@ -89,7 +89,7 @@ entities {
 		bool l2 <- false;
 		
 		/* list<tps> my_tps; */
-		operator my_operator; police my_police; party_witness my_party_witness; observer my_observer;
+		list<operator> my_operator; list<police> my_police; list<party_witness> my_party_witness; list<observer> my_observer;
 		action kurangi {
 			if (T>pengurang) {T <- T-pengurang;} else {pause}
 		}
@@ -98,49 +98,57 @@ entities {
 	species operator {
 		int pengurang <- rnd(pengurang_operator);
 		hasil my_hasil;
-		bool is_tps <- false;
+		bool in_tps <- false;
+
+		init {
+			my_hasil <- one_of (active_results where !(each.my_operator contains_any operator));
+			add self to: my_hasil.my_operator;if debug4 {write "added "+my_hasil.my_operator;}
+		}
 		
 		action moving {
 			// ada yg lebih baik di bawah // hasil my_hasil <- one_of (active_results where (each.my_operator != nil));
 			//hasil my_hasil <- first_with (active_results where (each.my_operator != nil));
-			hasil my_hasil <- one_of (active_results where (each.my_operator = nil));
+			// hasil my_hasil <- one_of (active_results where (each.my_operator = nil));
 			//good tp ada warning// hasil my_hasil <- one_of (active_results where (empty(each.my_operator)));
-			//hasil my_hasil <- one_of (active_results where (each.my_operator contains_any operator));
+			//my_hasil <- one_of (active_results where !(each.my_operator contains_any operator));
 			//add self to: my_hasil.my_operator;write "added "+my_hasil.my_operator;
-			if my_hasil = nil {write "error";}
+			//if my_hasil = nil {write "error";}
 			//if my_hasil = nil {error ""+self;}
-			my_hasil.pengurang <- self.pengurang;
-			if !is_tps {
+			if !in_tps {
+				my_hasil.pengurang <- self.pengurang;
 				ask my_hasil {
 					//add self to: my_hasil.my_operator;
 					do kurangi;tot_actors <- tot_actors-1;
 					if debug2 {write "nama: "+name+" pengurang: "+pengurang+" T: "+T+" Actors: "+tot_actors;}
 					if debug3 {write ":: "+self+", "+pengurang+", "+T+", "+tot_actors+", "+my_operator;}
 				}
-				is_tps <- true;
+				in_tps <- true;
 			}
 		}
-
 	}
 	
 	species police {
 		int pengurang <- rnd(pengurang_police);
 		hasil my_hasil;
-		bool is_tps <- false;
+		bool in_tps <- false;
 		
+		init{
+			my_hasil <- one_of (active_results where !(each.my_police contains_any police));
+			add self to: my_hasil.my_police;if debug4 {write "added "+my_hasil.my_police;}
+		}
 		action moving {
 			// ada yg lebih baik di bawah // hasil my_hasil <- one_of (active_results where (each.my_operator != nil));
 			//hasil my_hasil <- first_with (active_results where (each.my_operator != nil));
-			hasil my_hasil <- one_of (active_results where (each.my_police = nil));
-			if my_hasil = nil {write "error "+my_hasil;}
-			my_hasil.pengurang <- self.pengurang;
-			if !self.is_tps {
+			//hasil my_hasil <- one_of (active_results where (each.my_police = nil));
+			//if my_hasil = nil {write "error "+my_hasil;}
+			if !self.in_tps {
+				my_hasil.pengurang <- self.pengurang;
 				ask my_hasil {
 					do kurangi;tot_actors <- tot_actors-1;
-					if debug2 {write "nama: "+my_hasil+" pengurang: "+pengurang+" T: "+T+" Actors: "+tot_actors;}
-					if debug3 {write ""+my_hasil+", "+pengurang+", "+T+", "+tot_actors;}
+					if debug2 {write "nama: "+name+" pengurang: "+pengurang+" T: "+T+" Actors: "+tot_actors;}
+					if debug3 {write ""+self+", "+pengurang+", "+T+", "+tot_actors+", "+my_police;}
 				}
-				self.is_tps <- true;
+				self.in_tps <- true;
 			}
 		}
 	}
@@ -148,21 +156,25 @@ entities {
 	species party_witness {
 		int pengurang <- rnd(pengurang_party_witness);
 		hasil my_hasil;
-		bool is_tps;
+		bool in_tps <- false;
 		
+		init{
+			my_hasil <- one_of (active_results where !(each.my_party_witness contains_any party_witness));
+			add self to: my_hasil.my_party_witness;if debug4 {write "added "+my_hasil.my_party_witness;}
+		}
 		action moving {
 			// ada yg lebih baik di bawah // hasil my_hasil <- one_of (active_results where (each.my_operator != nil));
 			//hasil my_hasil <- first_with (active_results where (each.my_operator != nil));
-			hasil my_hasil <- one_of (active_results where (each.my_party_witness = nil));
-			if my_hasil = nil {write "error";}
-			my_hasil.pengurang <- self.pengurang;
-			if !is_tps {
+			//hasil my_hasil <- one_of (active_results where (each.my_party_witness = nil));
+			//if my_hasil = nil {write "error";}
+			if !in_tps {
+				my_hasil.pengurang <- self.pengurang;
 				ask my_hasil {
 					do kurangi;tot_actors <- tot_actors-1;
 					if debug2 {write "nama: "+name+" pengurang: "+pengurang+" T: "+T+" Actors: "+tot_actors;}
-					if debug3 {write ""+my_hasil+", "+pengurang+", "+T+", "+tot_actors;}
+					if debug3 {write ""+self+", "+pengurang+", "+T+", "+tot_actors+", "+my_party_witness;}
 				}
-				is_tps <- true;
+				in_tps <- true;
 			}
 		}
 	}
@@ -170,21 +182,25 @@ entities {
 	species observer {
 		int pengurang <- rnd(pengurang_observer);
 		hasil my_hasil;
-		bool is_tps;
+		bool in_tps <- false;
 		
+		init{
+			my_hasil <- one_of (active_results where !(each.my_observer contains_any observer));
+			add self to: my_hasil.my_observer;if debug4 {write "added "+my_hasil.my_observer;}
+		}
 		action moving {
 			// ada yg lebih baik di bawah // hasil my_hasil <- one_of (active_results where (each.my_operator != nil));
 			//hasil my_hasil <- first_with (active_results where (each.my_operator != nil));
-			hasil my_hasil <- one_of (active_results where (each.my_observer = nil));
-			if my_hasil = nil {write "error";}
-			my_hasil.pengurang <- self.pengurang;
-			if !is_tps {
+			//hasil my_hasil <- one_of (active_results where (each.my_observer = nil));
+			//if my_hasil = nil {write "error";}
+			if !in_tps {
+				my_hasil.pengurang <- self.pengurang;
 				ask my_hasil {
 					do kurangi;tot_actors <- tot_actors-1;
 					if debug2 {write "nama: "+name+" pengurang: "+pengurang+" T: "+T+" Actors: "+tot_actors;}
-					if debug3 {write ""+my_hasil+", "+pengurang+", "+T+", "+tot_actors;}
+					if debug3 {write ""+self+", "+pengurang+", "+T+", "+tot_actors+", "+my_observer;}
 				}
-				is_tps <- true;
+				in_tps <- true;
 			}
 		}
 	}
