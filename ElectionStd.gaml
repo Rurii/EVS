@@ -6,31 +6,29 @@
 
 model ElectionStd
 
+import "../includes/orde10.gaml"
+//import "../includes/orde100.gaml"
+//import "../includes/orde1000.gaml"
+//import "../includes/orde100000.gaml"
+
 global {
 	/** Insert the global definitions, variables and actions here */
-	bool debug1 <- false; bool debug2 <- false; bool debug3 <- true; bool debug4 <- true;
-	int nb_operator <- 57;
-	int nb_police <- 50;
-	int nb_party_witness <- 37;
-	int nb_observer <- 27;
-	int nb_results <- 57;
-	int tot_actors <- nb_operator+nb_police+nb_party_witness+nb_observer;
+	bool debug1 <- false; bool debug2 <- false; bool debug3 <- false; bool debug4 <- false;
 	
-	const pengurang_operator type: int <- 2 min: 1 max: 5 parameter: 'Pengaruh Negatif Operator:';
-	const pengurang_police type: int <- 10 min: 1 max: 10 parameter: 'Pengaruh Negatif Police:';
-	const pengurang_party_witness type: int <- 10 min: 1 max: 10 parameter: 'Pengaruh Negatif Party Witness:';
-	const pengurang_observer type: int <- 10 min: 1 max: 20 parameter: 'Pengaruh Negatif Observer:';
+	int tot_actors <- nb_operator+nb_police+nb_party_witness+nb_observer;
+	int n_cetak;
+	
+	const pengurang_operator type: int <- 2 min: 1 max: 5 parameter: 'Operator Negativity:';
+	const pengurang_police type: int <- 10 min: 1 max: 10 parameter: 'Police Negativity:';
+	const pengurang_party_witness type: int <- 10 min: 1 max: 10 parameter: 'Party Witness Negativity:';
+	const pengurang_observer type: int <- 10 min: 1 max: 20 parameter: 'Observer Negativity:';
 	
 	// int T;
 	float trust;
 	// int pengurang;
 	
-	list result_agents <- [];
-	list operator_agents <- [];
-	
-	list<hasil> active_results;
-	list<hasil> result_l2;
-	/* list<tps> active_tps; */
+	list result_agents <- []; list operator_agents <- [];
+	list<hasil> active_results; list<hasil> result_l2;
 	
 	/*
 	 * T=sum(hadir_person)/sum(total_person)
@@ -49,6 +47,7 @@ global {
 	
 		active_results <- list(copy(hasil));
 		/* result_l2 <- list(copy(hasil)); */
+		n_cetak <- nb_results;
 	}
 	
 	reflex dynamic {
@@ -56,9 +55,14 @@ global {
 		ask police {do moving;}
 		ask party_witness {do moving;}
 		ask observer {do moving;}
-		
-		
-		
+		ask hasil {
+			do cetak; 
+			if n_cetak = 1 {do cetak_batas; n_cetak <- nb_results;} else {n_cetak <- n_cetak-1;}
+		}
+	}
+	
+	
+	reflex second_stage {
 		
 	}
 	
@@ -93,6 +97,8 @@ entities {
 		action kurangi {
 			if (T>pengurang) {T <- T-pengurang;} else {pause}
 		}
+		action cetak {write ""+self+", "+T;}
+		action cetak_batas {write "---\n";}
 	}
 	
 	species operator {
@@ -120,7 +126,7 @@ entities {
 					//add self to: my_hasil.my_operator;
 					do kurangi;tot_actors <- tot_actors-1;
 					if debug2 {write "nama: "+name+" pengurang: "+pengurang+" T: "+T+" Actors: "+tot_actors;}
-					if debug3 {write ":: "+self+", "+pengurang+", "+T+", "+tot_actors+", "+my_operator;}
+					if debug3 {write ""+self+", "+pengurang+", "+T+", "+tot_actors+", "+my_operator;}
 				}
 				in_tps <- true;
 			}
@@ -204,7 +210,6 @@ entities {
 			}
 		}
 	}
-	
 }
 
 
@@ -221,23 +226,24 @@ experiment ElectionStd type: gui {
 
 /* experiment Batch type: batch repeat: 2 keep_seed: true until: (food_gathered = food_placed) or (time > 400) { */
 experiment Batch type: batch repeat: 2 keep_seed: true until: (time > 100) {
+	parameter name: 'Number of Poll Station' var: nb_results init: 57;
 	parameter name: 'Number of Operator' var: nb_operator init: 57;
 	parameter name: 'Number of Police' var: nb_police init: 50;
 	parameter name: 'Number of Party Witness ' var: nb_party_witness init: 50;
 	parameter name: 'Number of Observer' var: nb_observer init: 50;
 	
-/* 	reflex info_sim{
+ 	reflex info_sim{
 		write "Running a new simulation " + simulation;
-	} */
+	} 
 
-	
-	permanent {
+	/* permanent { */
+	output { 
 		display ElectionStd background: rgb('white') refresh_every: 1 {
 			chart "Trustworthiness" type: series {
 				data "Trustwortiness" value: trust;
 			}
 		}
-	}
+	} 
 	
 	
 }
